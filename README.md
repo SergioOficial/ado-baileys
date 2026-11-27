@@ -1,36 +1,68 @@
-# @ado/baileys
+<div align="center">
 
-A lightweight WhatsApp Web API wrapper basado en **Baileys** (WhiskeySockets), con utilities y helpers propios para bots.
+<picture>
+  <img src="docs/assets/hero.svg" alt="@ado/baileys — Baileys con utilidades y helpers propios de Ado" width="100%">
+</picture>
 
-> Objetivo: conservar la API original de Baileys, añadir utilidades de Ado y ofrecer una documentación clara para desarrolladores.
+<br>
 
----
+[![Node.js](https://img.shields.io/badge/Node.js-20%2B-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](#requisitos)
+[![License](https://img.shields.io/badge/license-MIT-38bdf8?style=for-the-badge)](#licencia)
+[![CI](https://github.com/SergioOficial/ado-baileys/actions/workflows/test.yml/badge.svg)](https://github.com/SergioOficial/ado-baileys/actions/workflows/test.yml)
 
-## Requisitos
+**Una base ligera para trabajar con WhatsApp Web desde Node.js.**
 
-- Node.js **>= 20**
-- npm
-- Una sesión de WhatsApp persistida para no volver a autenticar en cada inicio.
+Conserva la API de Baileys y añade helpers de Ado para botones interactivos y stickers.
 
----
+[Instalación](#instalacion) · [Uso rápido](#uso-rapido) · [Helpers](#helpers-de-ado) · [Sesiones](#sesiones) · [Contribuir](#contribuir) · [Licencia](#licencia)
 
-## Instalación
+</div>
+
+<picture>
+  <img src="docs/assets/divider.svg" alt="" width="100%">
+</picture>
+
+## ✨ Qué incluye
+
+| Característica | Descripción |
+|---|---|
+| 🧩 **API de Baileys** | Mantiene disponibles las exportaciones de `@whiskeysockets/baileys`. |
+| 🔘 **Botones interactivos** | Helper `sendInteractiveButtons()` para enviar botones nativos. |
+| 🎨 **Stickers** | Helper `sendModdedSticker()` para reenviar stickers conservando sus metadatos. |
+| 🔐 **Autenticación persistente** | Compatible con `useMultiFileAuthState()` y guardado de credenciales. |
+| 🛠️ **CommonJS** | Uso directo con `require()`. |
+
+<picture>
+  <img src="docs/assets/divider.svg" alt="" width="100%">
+</picture>
+
+## ⚡ Requisitos
+
+- Node.js **20 o superior**.
+- npm.
+- Una sesión de WhatsApp persistida para evitar vincular el dispositivo en cada inicio.
+
+## 📦 Instalación
+
+Desde npm:
 
 ```bash
 npm install @ado/baileys
 ```
 
-# o directamente desde GitHub:
+O directamente desde GitHub:
 
 ```bash
 npm install github:SergioOficial/ado-baileys
 ```
 
----
+<picture>
+  <img src="docs/assets/divider.svg" alt="" width="100%">
+</picture>
 
-## Uso rápido
+## 🚀 Uso rápido
 
-### Ejemplo (con socket)
+Este ejemplo crea una conexión, guarda las credenciales y escucha los mensajes entrantes:
 
 ```js
 const {
@@ -41,7 +73,6 @@ const {
 
 async function start() {
   const { state, saveCreds } = await useMultiFileAuthState('./session');
-
   const sock = makeWASocket({ auth: state });
 
   sock.ev.on('creds.update', saveCreds);
@@ -51,7 +82,7 @@ async function start() {
       const statusCode = lastDisconnect?.error?.output?.statusCode;
 
       if (statusCode !== DisconnectReason.loggedOut) {
-        // Aquí puedes implementar tu estrategia de reconexión.
+        // Implementa aquí tu estrategia de reconexión.
       }
     }
 
@@ -72,41 +103,20 @@ async function start() {
 start().catch(console.error);
 ```
 
-Guarda `./session` fuera del control de versiones. No publiques credenciales, códigos QR ni archivos de sesión.
+> [!WARNING]
+> Mantén `./session` fuera del control de versiones. Nunca publiques credenciales, códigos de vinculación ni archivos de sesión.
 
----
+<picture>
+  <img src="docs/assets/divider.svg" alt="" width="100%">
+</picture>
 
-## Funciones / Helpers incluidas
+## 🧰 Helpers de Ado
 
-El paquete conserva las exportaciones de **@whiskeysockets/baileys** y añade estas utilidades:
+El paquete conserva las exportaciones de Baileys y añade dos utilidades propias.
 
-- `sendInteractiveButtons(sock, jid, options)` — envía mensajes con botones interactivos nativos.
-- `sendModdedSticker(sock, jid, originalSticker)` — reenvía un sticker conservando sus metadatos.
+### 🔘 Botones interactivos
 
-> Las demás funciones disponibles son las exportaciones de Baileys. Consulta su documentación para conocer la API completa.
-
----
-
-## Utilidades recomendadas
-
-### Media (descarga)
-
-Puedes utilizar `downloadContentFromMessage`, exportada por Baileys, para descargar contenido multimedia de un mensaje.
-
-Ejemplo conceptual:
-
-```js
-const { downloadContentFromMessage } = require('@ado/baileys');
-
-// const stream = await downloadContentFromMessage(message, 'image');
-// Convierte el stream a Buffer si necesitas guardar el archivo.
-```
-
----
-
-## Mensajes interactivos
-
-### `sendInteractiveButtons(sock, jid, options)`
+`sendInteractiveButtons(sock, jid, options)`
 
 ```js
 const { sendInteractiveButtons } = require('@ado/baileys');
@@ -131,67 +141,115 @@ await sendInteractiveButtons(sock, '1234567890@s.whatsapp.net', {
 - `jid`: identificador del chat o grupo.
 - `buttons`: arreglo de botones con `name` y `buttonParamsJson`.
 
-La compatibilidad de los botones depende de WhatsApp y puede cambiar sin aviso.
+La compatibilidad visual de los botones depende de la versión de WhatsApp y puede cambiar sin aviso.
 
----
+### 🎨 Stickers
 
-## Stickers
-
-### `sendModdedSticker(sock, jid, originalSticker)`
+`sendModdedSticker(sock, jid, originalSticker)`
 
 ```js
 const { sendModdedSticker } = require('@ado/baileys');
 
 // originalSticker debe ser el objeto stickerMessage de un mensaje recibido.
-await sendModdedSticker(sock, jid, originalSticker);
+await sendModdedSticker(sock, '1234567890@s.whatsapp.net', originalSticker);
 ```
 
 La función conserva los metadatos del sticker original y devuelve el resultado de `sock.sendMessage()`.
 
----
+<picture>
+  <img src="docs/assets/divider.svg" alt="" width="100%">
+</picture>
 
-## Sesiones (Auth)
+## 🖼️ Utilidades multimedia
 
-Debes persistir las credenciales en una carpeta, por ejemplo:
+Para descargar contenido multimedia puedes utilizar `downloadContentFromMessage`, exportada por Baileys:
 
-- `useMultiFileAuthState('./session')`
-- `sock.ev.on('creds.update', saveCreds)`
+```js
+const { downloadContentFromMessage } = require('@ado/baileys');
 
-No compartas ni subas esa carpeta a GitHub. Si pierdes las credenciales, tendrás que volver a vincular el dispositivo.
+// const stream = await downloadContentFromMessage(message, 'image');
+// Convierte el stream a Buffer si necesitas guardar el archivo.
+```
 
----
+Consulta la documentación de Baileys para conocer los tipos de contenido y el flujo completo de descarga.
 
-## Troubleshooting
+<picture>
+  <img src="docs/assets/divider.svg" alt="" width="100%">
+</picture>
 
-### “Cannot find module / syntax error”
+## 🔐 Sesiones y autenticación
+
+Guarda las credenciales en una carpeta persistente:
+
+```js
+const { state, saveCreds } = await useMultiFileAuthState('./session');
+sock.ev.on('creds.update', saveCreds);
+```
+
+- Conserva la carpeta entre reinicios.
+- No la subas a GitHub ni la compartas.
+- Si pierdes las credenciales, tendrás que volver a vincular el dispositivo.
+
+<picture>
+  <img src="docs/assets/divider.svg" alt="" width="100%">
+</picture>
+
+## 🧯 Solución de problemas
+
+<details>
+<summary><strong>Cannot find module / error de sintaxis</strong></summary>
+
 - Comprueba que instalaste `@ado/baileys`.
 - Verifica que utilizas Node.js 20 o superior.
 - Este paquete utiliza CommonJS (`require`).
 
-### “Auth/credenciales se pierden”
-- Verifica que registraste `sock.ev.on('creds.update', saveCreds)`.
-- Comprueba que `./session` exista y tenga permisos de escritura.
-- Mantén la carpeta de sesión persistente entre reinicios.
+</details>
 
-### “La conexión se cierra”
+<details>
+<summary><strong>Se pierden las credenciales</strong></summary>
+
+- Registra `sock.ev.on('creds.update', saveCreds)`.
+- Comprueba que `./session` exista y tenga permisos de escritura.
+- Asegúrate de que el hosting conserve esa carpeta entre reinicios.
+
+</details>
+
+<details>
+<summary><strong>La conexión se cierra</strong></summary>
+
 - Comprueba el código de desconexión.
 - Si no fue un cierre de sesión (`DisconnectReason.loggedOut`), aplica una reconexión controlada.
+- Evita crear conexiones repetidas sin cerrar correctamente las anteriores.
 
----
+</details>
 
-## Contribuir
+<picture>
+  <img src="docs/assets/divider.svg" alt="" width="100%">
+</picture>
 
-Pull requests son bienvenidas.
+## 🤝 Contribuir
 
-1. Haz un fork.
+¡Las mejoras son bienvenidas!
+
+1. Haz un fork del repositorio.
 2. Crea una rama: `feat/mi-mejora`.
-3. Realiza tus cambios y pruebas.
-4. Abre un Pull Request describiendo lo que has modificado.
+3. Realiza los cambios y ejecuta las pruebas.
+4. Abre un Pull Request explicando qué cambiaste.
 
----
+<picture>
+  <img src="docs/assets/divider.svg" alt="" width="100%">
+</picture>
 
-## Licencia
+## 📄 Licencia
 
-MIT. Consulta también las licencias de las dependencias utilizadas.
+Este proyecto se distribuye bajo la licencia **MIT**. Consulta el archivo [LICENSE](LICENSE) y las licencias de las dependencias utilizadas.
 
----
+<div align="center">
+
+⭐ Si te resulta útil, considera darle una estrella al repositorio.
+
+Hecho con 💚 por [SergioOficial](https://github.com/SergioOficial)
+
+[Repositorio](https://github.com/SergioOficial/ado-baileys) · [Reportar un problema](https://github.com/SergioOficial/ado-baileys/issues)
+
+</div>
