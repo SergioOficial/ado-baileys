@@ -1,121 +1,128 @@
-# ado-baileys
+# @ado/baileys
 
-A lightweight WhatsApp Web API wrapper basado en **Baileys** (WhiskeySockets) con utilities/helpers para bots.
+Extensión ligera de [Baileys](https://github.com/WhiskeySockets/Baileys) con utilidades para enviar mensajes interactivos y stickers modificados. El paquete conserva las exportaciones originales de Baileys y añade helpers propios.
 
-> Objetivo: reparar/estandarizar el paquete y ofrecer una API/README
----
-
-## Requisitos
-
-- Node.js: recomendado **>= 18**
-- Un `WA Session` (persistencia) para no revalidar credenciales cada vez.
-- Preferible: TypeScript si el proyecto lo usa (si no, igual sirve).
-
----
+> **Compatibilidad:** CommonJS y Node.js 18 o superior. La conexión con WhatsApp requiere credenciales válidas y está sujeta a los cambios y condiciones de WhatsApp/Baileys.
 
 ## Instalación
 
-``` 
-npm i ado-baileys
+```bash
+npm install @ado/baileys
 ```
 
-# o si usas git:
+También puedes instalar directamente desde GitHub:
 
+```bash
+npm install github:SergioOficial/ado-baileys
 ```
- npm i git+https://github.com/SergioOficial/ado-baileys.git
+
+## Uso
+
+El paquete reexporta la API de `@whiskeysockets/baileys`. Este ejemplo muestra el flujo habitual de autenticación:
+
+```js
+const {
+  default: makeWASocket,
+  useMultiFileAuthState,
+  DisconnectReason
+} = require('@ado/baileys');
+
+async function start() {
+  const { state, saveCreds } = await useMultiFileAuthState('./auth_info');
+
+  const sock = makeWASocket({
+    auth: state
+  });
+
+  sock.ev.on('creds.update', saveCreds);
+
+  sock.ev.on('connection.update', ({ connection, lastDisconnect }) => {
+    if (connection === 'close') {
+      const statusCode = lastDisconnect?.error?.output?.statusCode;
+      console.log('Conexión cerrada:', statusCode);
+
+      if (statusCode !== DisconnectReason.loggedOut) {
+        // Implementa aquí tu estrategia de reconexión.
+      }
+    }
+
+    if (connection === 'open') {
+      console.log('WhatsApp conectado');
+    }
+  });
+}
+
+start().catch(console.error);
 ```
----
 
-## Uso rápido
+Guarda la carpeta de autenticación fuera del control de versiones. No publiques credenciales, QR, tokens ni archivos de sesión.
 
-### Ejemplo (con socket)
-js const { createWASocket, useMultiFileAuthState, fetchLatestBaileysVersion, } = require('ado-baileys');
-async function start() { const { state, saveCreds } = await useMultiFileAuthState('./session');
+## Helpers adicionales
 
-const { version } = await fetchLatestBaileysVersion();
+### `sendInteractiveButtons(sock, jid, options)`
 
-const sock = createWASocket({ auth: state, printQRInTerminal: true, version, });
+Envía un mensaje de flujo interactivo nativo.
 
-sock.ev.on('creds.update', saveCreds);
+```js
+const { sendInteractiveButtons } = require('@ado/baileys');
 
-sock.ev.on('messages.upsert', async ({ messages }) => { const m = messages?.[0]; if (!m.message) return;
+await sendInteractiveButtons(sock, '1234567890@s.whatsapp.net', {
+  title: 'Menú',
+  text: 'Selecciona una opción',
+  footer: 'Ado',
+  buttons: [
+    {
+      name: 'quick_reply',
+      buttonParamsJson: {
+        display_text: 'Saludar',
+        id: 'saludar'
+      }
+    }
+  ]
+});
+```
 
-console.log('Mensaje recibido:', m.key);
-// Respuesta simple (ajusta según tu helper de envío)
-// await sock.sendMessage(m.key.remoteJid, { text: 'Hola!' });
-}); }
+- `sock`: socket de Baileys conectado.
+- `jid`: identificador del chat.
+- `options.buttons`: arreglo de botones con `name` y `buttonParamsJson`.
+- Devuelve el mensaje generado por Baileys.
 
-start();
+La compatibilidad de los flujos interactivos depende de WhatsApp y puede cambiar sin aviso.
 
-Copy codeCopy Code
----
+### `sendModdedSticker(sock, jid, originalSticker)`
 
-## Funciones / Helpers incluidas
+Reenvía un sticker usando los metadatos del mensaje original.
 
-El proyecto re-exporta o incluye helpers típicos de Baileys/forks para acelerar el desarrollo:
+```js
+const { sendModdedSticker } = require('@ado/baileys');
 
-- `loadMessages` — carga/normaliza mensajes desde store más rápido.
-- `getContentType` — detecta el tipo de contenido de un mensaje.
-- `getDevice` — obtiene el device del mensaje si aplica.
-- `makeCacheableSignalKeyStore` — optimiza el auth store con cache.
-- `downloadContentFromMessage` — descarga contenido (media) a partir de un mensaje.
+await sendModdedSticker(sock, jid, originalMessage.message.stickerMessage);
+```
 
-> Nota: los nombres exactos de exportación dependen de tu implementación actual.
-> Cuando me pases el código (o tu `src/index.*`), te lo dejo 100% igual a tu API real.
+El objeto `originalSticker` debe contener los metadatos de medios requeridos por WhatsApp, normalmente obtenidos de un mensaje de sticker recibido. La función devuelve el resultado de `sock.sendMessage`.
 
----
+## API de Baileys
 
-## Utilidades recomendadas
+Todas las exportaciones de `@whiskeysockets/baileys` se vuelven a exportar desde este paquete, además de:
 
-### Media (descarga)
+- `sendInteractiveButtons`
+- `sendModdedSticker`
 
-- Usa `downloadContentFromMessage` para obtener buffers/streams.
-- Luego convierte el stream a `Buffer` si necesitas guardarlo.
+## Desarrollo
 
-Ejemplo conceptual:
-js // const stream = await downloadContentFromMessage(message, type); // stream -> Buffer / fs.writeFileSync(...)
-Copy codeCopy Code
----
+Requisitos: Node.js 18+ y npm.
 
-## Sesiones (Auth)
+```bash
+npm install
+npm test
+```
 
-Debes persistir credenciales en una carpeta (ej: `./session`):
+## Seguridad
 
-- `useMultiFileAuthState('./session')`
-
-Si quieres, puedo ayudarte a:
-- asegurar que el guardado de credenciales siempre ocurra
-- evitar problemas típicos de “Error: timed out / Replaced / session invalid”
-
----
-
-## Troubleshooting
-
-### “Cannot find module / syntax error”
-- Revisar si tu paquete es ESM o CJS.
-- Revisar versiones de Node y configuración de build.
-
-### “Auth/credenciales se pierden”
-- Verificar que se esté ejecutando `sock.ev.on('creds.update', saveCreds)`
-- Verificar que `./session` exista y tenga permisos.
-
-### “QR no aparece / no se actualiza”
-- Revisar `printQRInTerminal: true`
-- Revisar `version` con `fetchLatestBaileysVersion()`
-
----
-
-## Contribuir
-
-Pull requests son bienvenidas.
-
-1. Fork
-2. Crea una rama: `feat/fix-readme`
-3. Commit: `git commit -m "Fix: ..."`
-4. PR
-
----
+- No subas `.env`, carpetas de sesión ni credenciales.
+- Trata los JID y los mensajes entrantes como datos no confiables.
+- Usa este paquete respetando las condiciones de WhatsApp y la licencia de Baileys.
 
 ## Licencia
 
-MIT.
+MIT. Consulta también las licencias de las dependencias incluidas.
