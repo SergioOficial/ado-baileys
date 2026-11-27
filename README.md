@@ -1,8 +1,18 @@
 # @ado/baileys
 
-Extensión ligera de [Baileys](https://github.com/WhiskeySockets/Baileys) con utilidades para enviar mensajes interactivos y stickers modificados. El paquete conserva las exportaciones originales de Baileys y añade helpers propios.
+A lightweight WhatsApp Web API wrapper basado en **Baileys** (WhiskeySockets), con utilities y helpers propios para bots.
 
-> **Compatibilidad:** CommonJS y Node.js 20 o superior. La conexión con WhatsApp requiere credenciales válidas y está sujeta a los cambios y condiciones de WhatsApp/Baileys.
+> Objetivo: conservar la API original de Baileys, añadir utilidades de Ado y ofrecer una documentación clara para desarrolladores.
+
+---
+
+## Requisitos
+
+- Node.js **>= 20**
+- npm
+- Una sesión de WhatsApp persistida para no volver a autenticar en cada inicio.
+
+---
 
 ## Instalación
 
@@ -10,15 +20,17 @@ Extensión ligera de [Baileys](https://github.com/WhiskeySockets/Baileys) con ut
 npm install @ado/baileys
 ```
 
-También puedes instalar directamente desde GitHub:
+# o directamente desde GitHub:
 
 ```bash
 npm install github:SergioOficial/ado-baileys
 ```
 
-## Uso
+---
 
-El paquete reexporta la API de `@whiskeysockets/baileys`. Este ejemplo muestra el flujo habitual de autenticación:
+## Uso rápido
+
+### Ejemplo (con socket)
 
 ```js
 const {
@@ -28,21 +40,18 @@ const {
 } = require('@ado/baileys');
 
 async function start() {
-  const { state, saveCreds } = await useMultiFileAuthState('./auth_info');
+  const { state, saveCreds } = await useMultiFileAuthState('./session');
 
-  const sock = makeWASocket({
-    auth: state
-  });
+  const sock = makeWASocket({ auth: state });
 
   sock.ev.on('creds.update', saveCreds);
 
   sock.ev.on('connection.update', ({ connection, lastDisconnect }) => {
     if (connection === 'close') {
       const statusCode = lastDisconnect?.error?.output?.statusCode;
-      console.log('Conexión cerrada:', statusCode);
 
       if (statusCode !== DisconnectReason.loggedOut) {
-        // Implementa aquí tu estrategia de reconexión.
+        // Aquí puedes implementar tu estrategia de reconexión.
       }
     }
 
@@ -50,18 +59,54 @@ async function start() {
       console.log('WhatsApp conectado');
     }
   });
+
+  sock.ev.on('messages.upsert', async ({ messages }) => {
+    const message = messages?.[0];
+    if (!message?.message) return;
+
+    console.log('Mensaje recibido:', message.key);
+    // await sock.sendMessage(message.key.remoteJid, { text: '¡Hola!' });
+  });
 }
 
 start().catch(console.error);
 ```
 
-Guarda la carpeta de autenticación fuera del control de versiones. No publiques credenciales, QR, tokens ni archivos de sesión.
+Guarda `./session` fuera del control de versiones. No publiques credenciales, códigos QR ni archivos de sesión.
 
-## Helpers adicionales
+---
+
+## Funciones / Helpers incluidas
+
+El paquete conserva las exportaciones de **@whiskeysockets/baileys** y añade estas utilidades:
+
+- `sendInteractiveButtons(sock, jid, options)` — envía mensajes con botones interactivos nativos.
+- `sendModdedSticker(sock, jid, originalSticker)` — reenvía un sticker conservando sus metadatos.
+
+> Las demás funciones disponibles son las exportaciones de Baileys. Consulta su documentación para conocer la API completa.
+
+---
+
+## Utilidades recomendadas
+
+### Media (descarga)
+
+Puedes utilizar `downloadContentFromMessage`, exportada por Baileys, para descargar contenido multimedia de un mensaje.
+
+Ejemplo conceptual:
+
+```js
+const { downloadContentFromMessage } = require('@ado/baileys');
+
+// const stream = await downloadContentFromMessage(message, 'image');
+// Convierte el stream a Buffer si necesitas guardar el archivo.
+```
+
+---
+
+## Mensajes interactivos
 
 ### `sendInteractiveButtons(sock, jid, options)`
-
-Envía un mensaje de flujo interactivo nativo.
 
 ```js
 const { sendInteractiveButtons } = require('@ado/baileys');
@@ -83,46 +128,70 @@ await sendInteractiveButtons(sock, '1234567890@s.whatsapp.net', {
 ```
 
 - `sock`: socket de Baileys conectado.
-- `jid`: identificador del chat.
-- `options.buttons`: arreglo de botones con `name` y `buttonParamsJson`.
-- Devuelve el mensaje generado por Baileys.
+- `jid`: identificador del chat o grupo.
+- `buttons`: arreglo de botones con `name` y `buttonParamsJson`.
 
-La compatibilidad de los flujos interactivos depende de WhatsApp y puede cambiar sin aviso.
+La compatibilidad de los botones depende de WhatsApp y puede cambiar sin aviso.
+
+---
+
+## Stickers
 
 ### `sendModdedSticker(sock, jid, originalSticker)`
-
-Reenvía un sticker usando los metadatos del mensaje original.
 
 ```js
 const { sendModdedSticker } = require('@ado/baileys');
 
-await sendModdedSticker(sock, jid, originalMessage.message.stickerMessage);
+// originalSticker debe ser el objeto stickerMessage de un mensaje recibido.
+await sendModdedSticker(sock, jid, originalSticker);
 ```
 
-El objeto `originalSticker` debe contener los metadatos de medios requeridos por WhatsApp, normalmente obtenidos de un mensaje de sticker recibido. La función devuelve el resultado de `sock.sendMessage`.
+La función conserva los metadatos del sticker original y devuelve el resultado de `sock.sendMessage()`.
 
-## API de Baileys
+---
 
-Todas las exportaciones de `@whiskeysockets/baileys` se vuelven a exportar desde este paquete, además de:
+## Sesiones (Auth)
 
-- `sendInteractiveButtons`
-- `sendModdedSticker`
+Debes persistir las credenciales en una carpeta, por ejemplo:
 
-## Desarrollo
+- `useMultiFileAuthState('./session')`
+- `sock.ev.on('creds.update', saveCreds)`
 
-Requisitos: Node.js 20+ y npm.
+No compartas ni subas esa carpeta a GitHub. Si pierdes las credenciales, tendrás que volver a vincular el dispositivo.
 
-```bash
-npm install
-npm test
-```
+---
 
-## Seguridad
+## Troubleshooting
 
-- No subas `.env`, carpetas de sesión ni credenciales.
-- Trata los JID y los mensajes entrantes como datos no confiables.
-- Usa este paquete respetando las condiciones de WhatsApp y la licencia de Baileys.
+### “Cannot find module / syntax error”
+- Comprueba que instalaste `@ado/baileys`.
+- Verifica que utilizas Node.js 20 o superior.
+- Este paquete utiliza CommonJS (`require`).
+
+### “Auth/credenciales se pierden”
+- Verifica que registraste `sock.ev.on('creds.update', saveCreds)`.
+- Comprueba que `./session` exista y tenga permisos de escritura.
+- Mantén la carpeta de sesión persistente entre reinicios.
+
+### “La conexión se cierra”
+- Comprueba el código de desconexión.
+- Si no fue un cierre de sesión (`DisconnectReason.loggedOut`), aplica una reconexión controlada.
+
+---
+
+## Contribuir
+
+Pull requests son bienvenidas.
+
+1. Haz un fork.
+2. Crea una rama: `feat/mi-mejora`.
+3. Realiza tus cambios y pruebas.
+4. Abre un Pull Request describiendo lo que has modificado.
+
+---
 
 ## Licencia
 
-MIT. Consulta también las licencias de las dependencias incluidas.
+MIT. Consulta también las licencias de las dependencias utilizadas.
+
+---
