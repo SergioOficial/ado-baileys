@@ -2,7 +2,7 @@
 
 Extensión ligera de [Baileys](https://github.com/WhiskeySockets/Baileys) con utilidades para enviar mensajes interactivos y stickers modificados. El paquete conserva las exportaciones originales de Baileys y añade helpers propios.
 
-> **Compatibilidad:** CommonJS y Node.js 18 o superior. La conexión con WhatsApp requiere credenciales válidas y está sujeta a los cambios y condiciones de WhatsApp/Baileys.
+> **Compatibilidad:** CommonJS y Node.js 20 o superior. La conexión con WhatsApp requiere credenciales válidas y está sujeta a los cambios y condiciones de WhatsApp/Baileys.
 
 ## Instalación
 
@@ -110,7 +110,7 @@ Todas las exportaciones de `@whiskeysockets/baileys` se vuelven a exportar desde
 
 ## Desarrollo
 
-Requisitos: Node.js 18+ y npm.
+Requisitos: Node.js 20+ y npm.
 
 ```bash
 npm install
