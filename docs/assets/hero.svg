@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="260" viewBox="0 0 1200 260">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#071b17"/><stop offset="1" stop-color="#102a40"/></linearGradient><linearGradient id="a" x1="0" x2="1"><stop stop-color="#4ade80"/><stop offset="1" stop-color="#38bdf8"/></linearGradient></defs>
+<rect width="1200" height="260" rx="24" fill="url(#bg)"/><circle cx="1040" cy="35" r="180" fill="#22c55e" opacity=".08"/><circle cx="1100" cy="230" r="140" fill="#38bdf8" opacity=".08"/>
+<g fill="none" stroke="url(#a)" stroke-width="2" opacity=".5"><path d="M820 0v260M900 0v260M980 0v260M1060 0v260M1140 0v260"/><path d="M800 60h400M800 130h400M800 200h400"/></g>
+<text x="70" y="112" fill="#f8fafc" font-family="Arial,sans-serif" font-size="58" font-weight="700">@ado/baileys</text>
+<text x="74" y="158" fill="#cbd5e1" font-family="Arial,sans-serif" font-size="23">Baileys, con utilidades y helpers propios de Ado.</text>
+<rect x="74" y="188" width="170" height="4" rx="2" fill="url(#a)"/>
+<text x="74" y="225" fill="#86efac" font-family="Arial,sans-serif" font-size="15" letter-spacing="3">WHATSAPP WEB API · NODE.JS</text>
+</svg>
