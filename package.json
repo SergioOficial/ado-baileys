@@ -4,7 +4,8 @@
   "description": "Baileys wrapper with interactive-message and sticker utilities",
   "main": "index.js",
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "test:botones": "node test/test-botones.js"
   },
   "engines": {
     "node": ">=20"
