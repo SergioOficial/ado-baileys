@@ -10,6 +10,21 @@ const qrcode = require('qrcode-terminal');
 const { Boom } = require('@hapi/boom');
 
 const logger = pino({ level: 'silent' });
+
+// Baileys 6.x puede dejar sin manejar el rechazo de la consulta de pre-keys
+// durante CB:success. Un 408 aquí no debe cerrar el proceso de prueba:
+// el socket puede seguir conectado y recibir mensajes.
+process.on('unhandledRejection', (reason) => {
+    const statusCode = reason?.output?.statusCode || reason?.data?.statusCode;
+    if (statusCode === 408 || reason?.message === 'Timed Out') {
+        console.error('\n⚠️ WhatsApp tardó demasiado en responder a la consulta de claves (408).');
+        console.error('   Mantengo la prueba activa para seguir escuchando mensajes.');
+        console.error('   Si se repite, revisa la conexión a Internet o prueba otra red.\n');
+        return;
+    }
+
+    console.error('❌ Rechazo inesperado de Baileys:', reason);
+});
 let reconectando = false;
 
 function unwrapMessage(message) {
