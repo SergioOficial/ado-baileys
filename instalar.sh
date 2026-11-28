@@ -126,8 +126,8 @@ case "${1:-test}" in
 esac
 LANZADOR
   # Sustituir el marcador por la ruta elegida.
-  sed "s|__ADO_DIR__|$DIR|g" "$L_DIR/adobaileys" > "$L_DIR/adobaileis.tmp"
-  mv "$L_DIR/adobaileis.tmp" "$L_DIR/adobaileys"
+  sed "s|__ADO_DIR__|$DIR|g" "$L_DIR/adobaileys" > "$L_DIR/adobaileys.tmp"
+  mv "$L_DIR/adobaileys.tmp" "$L_DIR/adobaileys"
   chmod 755 "$L_DIR/adobaileys"
   bien "Comando adobaileys instalado en $L_DIR"
 else
